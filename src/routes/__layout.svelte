@@ -1,7 +1,6 @@
 <script>
 	import "../app.css"
-	import { auth } from "../store/authMethods"
-	import { goto } from "$app/navigation"
+	import { auth } from "../store/authStore"
 
 	const login = async () => {
 		try {
