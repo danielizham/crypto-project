@@ -1,26 +1,18 @@
 <script>
 	import "../app.css"
-	import { isLoggedIn, user } from "../store/authStore"
-	import { auth, googleProvider } from "/src/Firebase"
-	import { signInWithPopup, signOut } from "@firebase/auth"
+	import { auth } from "../store/authMethods"
 	import { goto } from "$app/navigation"
 
 	const login = async () => {
 		try {
-			const res = await signInWithPopup(auth, googleProvider)
-			$user = res.user
-			console.log(res.user)
-			$isLoggedIn = true
-			goto("/profile")
+			auth.signInWith("google")
 		} catch (error) {
 			console.log(error)
 		}
 	}
 
 	const logout = () => {
-		signOut(auth)
-		$user = {}
-		$isLoggedIn = !$isLoggedIn
+		auth.signOut()
 	}
 </script>
 
@@ -33,7 +25,7 @@
 		<a class="btn btn-accent px-11 mr-10" href="/profile">Profile</a>
 	</div>
 	<div class="navbar-end">
-		{#if $isLoggedIn}
+		{#if $auth.user}
 			<a class="btn btn-error px-11" href="/" on:click={logout}>Logout</a>
 		{:else}
 			<a class="btn btn-error px-11" href="/" on:click={login}>Log In</a>
