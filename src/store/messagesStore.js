@@ -4,11 +4,12 @@ import { db } from "../Firebase"
 
 const messages = writable([])
 
-async function addMessage(userId, message) {
+async function addMessage(userId, message, username) {
     try {
         const messageRef = await addDoc(collection(db, 'messages'), {
             createdOn: Date.now(),
             userId: `${userId}`,
+            username,
             message
         })
     } catch (error) {

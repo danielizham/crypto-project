@@ -3,7 +3,7 @@
 	import { auth } from "../../store/authStore"
 	let messageContent = ""
 	function submitMessage() {
-		addMessage($auth.user.uid, messageContent)
+		addMessage($auth.user.uid, messageContent, $auth.user.displayName)
 		messageContent = ""
 	}
 </script>
@@ -13,9 +13,17 @@
 		{#each $messages as messageObj}
 			{#if messageObj.userId == $auth.user.uid}
 				<!-- content here -->
-				<h2 class="rounded-2xl rounded-br-none alert-success ml-auto m-4 p-4 w-72">{messageObj.message}</h2>
+				<h2 class="rounded-2xl rounded-br-none alert-success ml-auto m-4 p-4 w-72 relative">
+					{messageObj.message}
+					<br />
+					<div class="badge badge-accent text-black absolute left-0">{messageObj.username}</div>
+				</h2>
 			{:else}
-				<h2 class="rounded-2xl rounded-bl-none alert-info m-4 p-4 w-72">{messageObj.message}</h2>
+				<h2 class="rounded-2xl rounded-bl-none alert-info m-4 p-4 w-72 relative">
+					{messageObj.message}
+					<br />
+					<div class="badge badge-accent text-black absolute right-0">{messageObj.username}</div>
+				</h2>
 			{/if}
 		{/each}
 	</div>
