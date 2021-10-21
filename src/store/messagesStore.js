@@ -7,7 +7,7 @@ const messages = writable([])
 async function addMessage(userId, message, username) {
     try {
         const messageRef = await addDoc(collection(db, 'messages'), {
-            createdOn: Date.now(),
+            createdOn: new Date().getTime(),
             userId: `${userId}`,
             username,
             message
@@ -18,7 +18,7 @@ async function addMessage(userId, message, username) {
 }
 
 function listenToMesseges() {
-    const q = query(collection(db, "messages"), orderBy("createdOn", "desc"), limit(7))
+    const q = query(collection(db, "messages"), limit(7), orderBy("createdOn", "desc"))
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         messages.set([])
         querySnapshot.forEach((doc) => {
