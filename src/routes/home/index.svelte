@@ -3,8 +3,13 @@
 	import { auth } from "../../store/authStore"
 	let messageContent = ""
 	function submitMessage() {
-		addMessage($auth.user.uid, messageContent, $auth.user.displayName)
-		messageContent = ""
+		if (messageContent !== "") {
+			addMessage($auth.user.uid, messageContent, $auth.user.displayName)
+			messageContent = ""
+		}
+	}
+	const clickedKey = (e) => {
+		if (e.charCode === 13) submitMessage()
 	}
 </script>
 
@@ -13,16 +18,19 @@
 		{#each $messages as messageObj}
 			{#if messageObj.userId == $auth.user.uid}
 				<!-- content here -->
-				<h2 class="rounded-2xl rounded-br-none alert-success ml-auto m-4 p-4 w-72 relative">
+				<h2
+					class="rounded-2xl rounded-br-none alert-success ml-auto m-4 p-4 w-72 relative"
+					style="overflow-wrap: break-word;"
+				>
 					{messageObj.message}
 					<br />
-					<div class="badge badge-accent text-black absolute left-0">{messageObj.username}</div>
+					<div class="badge badge-accent text-black absolute left-0 -bottom-3">{messageObj.username}</div>
 				</h2>
 			{:else}
-				<h2 class="rounded-2xl rounded-bl-none alert-info m-4 p-4 w-72 relative">
+				<h2 class="rounded-2xl rounded-bl-none alert-info m-4 p-4 w-72 relative" style="overflow-wrap: break-word;">
 					{messageObj.message}
 					<br />
-					<div class="badge badge-accent text-black absolute right-0">{messageObj.username}</div>
+					<div class="badge badge-accent text-black absolute right-0 -bottom-3">{messageObj.username}</div>
 				</h2>
 			{/if}
 		{/each}
@@ -30,6 +38,7 @@
 	<input
 		class="flex w-96 mx-auto mb-5 input input-accent"
 		placeholder="Enter Your Text"
+		on:keypress={clickedKey}
 		bind:value={messageContent}
 		type="text"
 	/>
