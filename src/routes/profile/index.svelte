@@ -1,5 +1,5 @@
 <script>
-	import { auth } from "/src/store/authMethods"
+	import { auth } from "/src/store/authStore"
 </script>
 
 <h1>This is the Profile</h1>

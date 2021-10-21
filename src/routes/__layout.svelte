@@ -20,7 +20,7 @@
 		<span class="text-lg font-bold"> Crypt Messenger </span>
 	</div>
 	<div class="navbar-center">
-		<a class="btn btn-accent px-11 mr-10" href="/">Home</a>
+		<a class="btn btn-accent px-11 mr-10" href="/home">Home</a>
 		<a class="btn btn-accent px-11 mr-10" href="/profile">Profile</a>
 	</div>
 	<div class="navbar-end">
@@ -32,6 +32,6 @@
 	</div>
 </nav>
 
-<div class="pt-10 px-10 min-h-screen text-warning">
+<div class="pt-10 px-10 text-warning">
 	<slot />
 </div>

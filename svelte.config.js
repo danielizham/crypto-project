@@ -7,8 +7,12 @@ const config = {
         adapter: adapter(),
         // hydrate the <div id="svelte"> element in src/app.html
         target: "#svelte",
+        vite: {
+            ssr: {
+                external: ['firebase']
+            }
+        },
     },
-
     preprocess: [
         preprocess({
             postcss: true,
