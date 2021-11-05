@@ -1,23 +1,30 @@
 <script>
-	import { messages, addMessage, listenToMesseges, deleteMessages } from "../../store/messagesStore"
+	import {
+		messages,
+		addMessage,
+		deleteMessages,
+		initiateConnection,
+		secondParty,
+	} from "../../store/messagesStore"
 	import { auth } from "../../store/authStore"
 	import { onMount } from "svelte"
 	let messageContent = ""
 	function submitMessage() {
 		if (messageContent !== "") {
-			addMessage($auth.user.uid, messageContent, $auth.user.displayName)
+			addMessage($auth.user.uid, $auth.user.email, messageContent, $auth.user.displayName)
 			messageContent = ""
 		}
 	}
 	const clickedKey = (e) => {
 		if (e.charCode === 13) submitMessage()
 	}
-	onMount(() => {
-		listenToMesseges()
-	})
+	// onMount(() => {
+	// 	listenToMesseges()
+	// })
 </script>
 
 {#if $auth.user}
+	<h3>{JSON.stringify($secondParty)}</h3>
 	<div class="flex flex-col-reverse mx-auto bg-gray-600 m-5 rounded-xl p-3 min-w-max md:max-w-4xl">
 		{#each $messages as messageObj}
 			{#if messageObj.userId == $auth.user.uid}
@@ -47,7 +54,7 @@
 	/>
 	<div class="flex gap-5 justify-center max-w-4xl mx-auto">
 		<div class="btn btn-accent" on:click={submitMessage}>Send Messege</div>
-		<!-- <div class="btn btn-accent" on:click={listenToMesseges()}>Listen to Messeges</div> -->
+		<div class="btn btn-accent" on:click={initiateConnection($auth.user.email)}>Listen to Messeges</div>
 		<div class="btn btn-error" on:click={deleteMessages($auth.user.uid)}>Delete Messeges</div>
 	</div>
 {:else}
