@@ -1,5 +1,12 @@
 <script>
-	import { messages, addMessage, deleteMessages, initiateConnection, secondParty } from "../../store/messagesStore"
+	import {
+		messages,
+		addMessage,
+		deleteMessages,
+		initiateConnection,
+		secondParty,
+		connectionRoom,
+	} from "../../store/messagesStore"
 	import { auth } from "../../store/authStore"
 	import { onMount } from "svelte"
 	let messageContent = ""
@@ -18,7 +25,9 @@
 </script>
 
 {#if $auth.user}
-	<h3>Second Party: {$secondParty.userEmail || "Not Assigned"}</h3>
+	<!-- <h3>Second Party: {$secondParty.userEmail || "Not Assigned"}</h3> -->
+	<h3>Second Party: {JSON.stringify($secondParty)}</h3>
+	<h3>Connection Information: {JSON.stringify($connectionRoom)}</h3>
 	<div class="flex flex-col-reverse mx-auto bg-gray-600 m-5 rounded-xl p-3 min-w-max md:max-w-4xl">
 		{#each $messages as messageObj}
 			{#if messageObj.userId == $auth.user.uid}

@@ -4,6 +4,7 @@ import { db } from "../Firebase"
 
 const messages = writable([])
 const secondParty = writable({})
+const connectionRoom = writable({})
 
 async function addMessage(userId, userEmail, message, username) {
     try {
@@ -41,19 +42,21 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
     const connectionSnap = await getDocs(connectionQuery)
     let ourConnection = []
     connectionSnap.forEach(connection => {
-        let flag = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
-        ourConnection = flag ? connection.data() : ourConnection;
-    })
-    if (ourConnection == []) {
-        try {
-            const connectionRef = await addDoc(collection(db, 'connections'), {
-                createdOn: new Date().getTime(),
-                userEmails: [currentUserEmail, otherUserEmail],
-                encryptedSharedKey: "TeTeTeTe"
-            })
-        } catch (error) {
-            console.log(error);
+        let connectionExists = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
+        ourConnection = connectionExists ? connection.data() : ourConnection;
+        if (connectionExists) {
+            ourConnection = connection.data()
+            connectionRoom.set(connection.data())
         }
+    })
+    if (ourConnection.length == 0) {
+        const connectionRef = await addDoc(collection(db, 'connections'), {
+            createdOn: new Date().getTime(),
+            userEmails: [currentUserEmail, otherUserEmail],
+            encryptedSharedKey: "TeTeTeTe"
+        })
+        let connectionInformation = await getDoc(connectionRef)
+        connectionRoom.set(connectionInformation.data())
     } else {
         const q = query(collection(db, "messages"), limit(7), orderBy("createdOn", "desc"), where("userEmail", "in", [otherUserEmail, currentUserEmail]))
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -110,4 +113,4 @@ async function deleteMessages(userId) {
 */
 
 
-export { addMessage, messages, listenToMesseges, deleteMessages, initiateConnection, secondParty }
+export { addMessage, messages, listenToMesseges, deleteMessages, initiateConnection, secondParty, connectionRoom }
