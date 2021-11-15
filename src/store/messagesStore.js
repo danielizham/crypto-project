@@ -1,5 +1,5 @@
 import { addDoc, collection, query, onSnapshot, limit, orderBy, getDocs, deleteDoc, where, doc, getDoc } from "@firebase/firestore";
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 import { db } from "../Firebase"
 
 const messages = writable([])
@@ -8,15 +8,15 @@ const connectionRoom = writable({})
 
 async function addMessage(userId, userEmail, message, username) {
     try {
-        const messageRef = await addDoc(collection(db, 'messages'), {
+        const connectionRef = await addDoc(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), {
             createdOn: new Date().getTime(),
             userId: `${userId}`,
             userEmail,
             username,
             message
         })
-    } catch (error) {
-        console.log(error);
+    } catch (e) {
+        console.log(e);
     }
 }
 
@@ -24,8 +24,10 @@ async function initiateConnection(currentUserEmail) {
     let otherUserEmail = prompt("Enter The Other Party's Email", "Everyone")
     switch (otherUserEmail) {
         case "Everyone":
-            // listenToMesseges()
             alert("It Wont be secure if you can hear everyone.")
+            break
+        case "":
+            alert("Please provide an email")
             break
         default:
             listenToOtherPerson(currentUserEmail, otherUserEmail)
@@ -40,40 +42,35 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
 
     const connectionQuery = query(collection(db, 'connections'))
     const connectionSnap = await getDocs(connectionQuery)
-    let ourConnection = []
     connectionSnap.forEach(connection => {
         let connectionExists = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
-        ourConnection = connectionExists ? connection.data() : ourConnection;
         if (connectionExists) {
-            ourConnection = connection.data()
-            connectionRoom.set(connection.data())
+            connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
         }
     })
-    if (ourConnection.length == 0) {
-        const connectionRef = await addDoc(collection(db, 'connections'), {
-            createdOn: new Date().getTime(),
-            userEmails: [currentUserEmail, otherUserEmail],
-            encryptedSharedKey: "TeTeTeTe"
-        })
-        let connectionInformation = await getDoc(connectionRef)
-        connectionRoom.set(connectionInformation.data())
-    } else {
-        const q = query(collection(db, "messages"), limit(7), orderBy("createdOn", "desc"), where("userEmail", "in", [otherUserEmail, currentUserEmail]))
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            messages.set([])
-            querySnapshot.forEach((doc) => {
-                messages.update(mesgs => [...mesgs, doc.data()])
-            })
-        })
-    }
-
+    await checkConnection()
 }
 
-// justanothernerd000@gmail.com
-// egyboy251@gmail.com
+async function checkConnection() {
+    if (get(connectionRoom) == {}) {
+        await createConnection()
+    } else {
+        loadMessages()
+    }
+}
 
-function listenToMesseges() {
-    const q = query(collection(db, "messages"), limit(7), orderBy("createdOn", "desc"))
+async function createConnection() {
+    const connectionRef = await addDoc(collection(db, 'connections'), {
+        createdOn: new Date().getTime(),
+        userEmails: [currentUserEmail, otherUserEmail],
+        encryptedSharedKey: "TeTeTeTe"
+    })
+    let connectionInformation = await getDoc(connectionRef)
+    connectionRoom.set({ connection: connectionInformation.data(), connectionID: connectionRef.id })
+}
+
+function loadMessages() {
+    const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), orderBy("createdOn", "desc"))
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         messages.set([])
         querySnapshot.forEach((doc) => {
@@ -83,10 +80,10 @@ function listenToMesseges() {
 }
 
 async function deleteMessages(userId) {
-    const q = query(collection(db, 'messages'), where("userId", "==", userId))
+    const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), where('userId', "==", userId))
     const querySnapshot = await getDocs(q);
-    querySnapshot.forEach(async(document) => {
-        await deleteDoc(doc(db, 'messages', document.id))
+    querySnapshot.forEach(async (document) => {
+        await deleteDoc(doc(db, `connections/${get(connectionRoom)['connectionID']}/messages`, document.id))
     });
 }
 
@@ -99,7 +96,7 @@ async function deleteMessages(userId) {
         asks for the shared from the other end
     - Room exists:  -
 
-    == Askign for shared keys ==
+    == Asking for shared keys ==
     >
     >
     >
@@ -113,4 +110,4 @@ async function deleteMessages(userId) {
 */
 
 
-export { addMessage, messages, listenToMesseges, deleteMessages, initiateConnection, secondParty, connectionRoom }
+export { addMessage, messages, deleteMessages, initiateConnection, secondParty, connectionRoom }
