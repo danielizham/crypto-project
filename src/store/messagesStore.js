@@ -48,28 +48,38 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
             connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
         }
     })
-    await checkConnection()
+    await checkConnection(currentUserEmail, otherUserEmail)
+    await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
+        mode: "cors"
+    })
 }
 
-async function checkConnection() {
-    if (get(connectionRoom) == {}) {
-        await createConnection()
+async function checkConnection(currentUserEmail, otherUserEmail) {
+    if (get(connectionRoom).connectionID == undefined) {
+        await createConnection(currentUserEmail, otherUserEmail)
     } else {
-        loadMessages()
+        await loadMessages()
     }
 }
 
-async function createConnection() {
+async function createConnection(currentUserEmail, otherUserEmail) {
+    let res = await fetch(`http://localhost:5000/send-shared-key/`, {
+        mode: "cors"
+    })
+    let shared_key = await res.json()
     const connectionRef = await addDoc(collection(db, 'connections'), {
+        encryptedSharedKey: shared_key.data,
         createdOn: new Date().getTime(),
         userEmails: [currentUserEmail, otherUserEmail],
-        encryptedSharedKey: "TeTeTeTe"
     })
     let connectionInformation = await getDoc(connectionRef)
     connectionRoom.set({ connection: connectionInformation.data(), connectionID: connectionRef.id })
 }
 
-function loadMessages() {
+async function loadMessages() {
+    let res = await fetch(`http://localhost:5000/shared-key/${get(connectionRoom).connection.encryptedSharedKey}/`, {
+        mode: "cors"
+    })
     const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), orderBy("createdOn", "desc"))
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         messages.set([])
@@ -86,28 +96,5 @@ async function deleteMessages(userId) {
         await deleteDoc(doc(db, `connections/${get(connectionRoom)['connectionID']}/messages`, document.id))
     });
 }
-
-/*
-    == Key Exchange ==
-    - Create room if it doesnt exist (contain the users' IDs) -
-    - create the shared key, encrypt it and then push it to the room - => fetch (machine) getSharedKey(other public_key) => he returns the shared key
-                                                                          fetch (Server) updateRoomSharedKey()
-    - if it exists: update other person's info -
-        asks for the shared from the other end
-    - Room exists:  -
-
-    == Asking for shared keys ==
-    >
-    >
-    >
-    ==  Sending  ==
-    fetch (machine) (plaintext) => he returns the (cipher, nounce, sign_len)
-    fetch (server) (cipher, nounce, sign_len) => returns ok
-
-    == Recieving ==
-    fetch (server) that (cipher, nounce, sign_len, other public_key) => returns ok
-    fetch (machine) to this pc, (cipher, nounce, sign_len, other public_key) => he returns the decrypted message
-*/
-
 
 export { addMessage, messages, deleteMessages, initiateConnection, secondParty, connectionRoom }

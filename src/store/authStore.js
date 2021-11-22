@@ -4,24 +4,32 @@ import { browser } from '$app/env'
 import { goto } from '$app/navigation'
 import { writable } from 'svelte/store'
 import { getAuth, onAuthStateChanged, signInWithPopup, signOut as _signOut, GoogleAuthProvider } from "firebase/auth"
-import { addDoc, collection, getDocs, query, where } from "@firebase/firestore"
+import { addDoc, collection, doc, getDocs, query, setDoc, where } from "@firebase/firestore"
 
 
-const addUserInfo = async(userEmail, userId) => {
+const addUserInfo = async (userEmail, userId, publicKey) => {
     let q = query(collection(db, "users"), where('userEmail', "==", userEmail))
     let queryDocs = await getDocs(q)
-    if (queryDocs.empty) {
-        try {
-            const userRef = await addDoc(collection(db, 'users'), {
-                createdOn: new Date().getTime(),
-                userEmail,
-                publicKey: "BlaBlaBla",
-                userId,
-            })
-        } catch (error) {
-            console.log(error);
-        }
-    }
+    const userRef = await setDoc(doc(db, 'users', userId), {
+        userId,
+        userEmail,
+        publicKey: `${publicKey}`,
+    })
+}
+
+
+const init_user = async (username) => {
+    await fetch(`http://localhost:5000/set-name/${username}`, {
+        mode: 'cors'
+    })
+    let response_2 = await fetch('http://localhost:5000/my-pub-key', {
+        mode: 'cors',
+        method: "GET",
+    })
+    let pub_key = await response_2.json()
+    console.log(pub_key);
+
+    return pub_key
 }
 
 const createAuth = () => {
@@ -29,6 +37,8 @@ const createAuth = () => {
 
     async function listen() {
         const auth = getAuth(app)
+        let public_key = await init_user(auth.currentUser.displayName)
+        addUserInfo(auth.currentUser.email, auth.currentUser.uid, public_key.data)
         onAuthStateChanged(auth,
             user => set({ user, known: true }),
             err => console.error(err.message),
@@ -54,7 +64,6 @@ const createAuth = () => {
         const auth = getAuth(app)
         const provider = providerFor(name)
         await signInWithPopup(auth, provider)
-        addUserInfo(auth.currentUser.email, auth.currentUser.uid)
         goto("/profile")
     }
 
