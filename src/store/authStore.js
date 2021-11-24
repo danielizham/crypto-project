@@ -4,7 +4,7 @@ import { browser } from '$app/env'
 import { goto } from '$app/navigation'
 import { writable } from 'svelte/store'
 import { getAuth, onAuthStateChanged, signInWithPopup, signOut as _signOut, GoogleAuthProvider } from "firebase/auth"
-import { addDoc, collection, doc, getDocs, query, setDoc, where } from "@firebase/firestore"
+import {  doc, setDoc } from "@firebase/firestore"
 
 
 const addUserInfo = async (userEmail, username, userId) => {
@@ -15,8 +15,6 @@ const addUserInfo = async (userEmail, username, userId) => {
         mode: 'cors',
     })
     let { data } = await response_2.json()
-
-    let q = query(collection(db, "users"), where('userEmail', "==", userEmail))
     const userRef = await setDoc(doc(db, 'users', userId), {
         userId,
         userEmail,
