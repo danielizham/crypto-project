@@ -48,18 +48,16 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
             connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
         }
     })
-    await checkConnection(currentUserEmail, otherUserEmail)
-    await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
+    fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
         mode: "cors"
     })
+    await checkConnection(currentUserEmail, otherUserEmail)
 }
 
 async function checkConnection(currentUserEmail, otherUserEmail) {
-    if (get(connectionRoom).connectionID == undefined) {
+    if (get(connectionRoom).connectionID == undefined)
         await createConnection(currentUserEmail, otherUserEmail)
-    } else {
-        await loadMessages()
-    }
+    await loadMessages()
 }
 
 async function createConnection(currentUserEmail, otherUserEmail) {
