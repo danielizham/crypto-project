@@ -1,4 +1,4 @@
-import { addDoc, collection, query, onSnapshot, limit, getDocs, deleteDoc, where, doc, getDoc } from "@firebase/firestore";
+import { addDoc, collection, query, onSnapshot, limit, getDocs, deleteDoc, where, doc, getDoc, setDoc, updateDoc } from "@firebase/firestore";
 import { writable, get } from "svelte/store";
 import { db } from "../Firebase"
 
@@ -56,7 +56,8 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
             connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
         }
     })
-    fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
+    console.log(get(secondParty)["publicKey"]);
+    await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
         mode: "cors"
     })
     await checkConnection(currentUserEmail, otherUserEmail)
@@ -70,10 +71,12 @@ async function checkConnection(currentUserEmail, otherUserEmail) {
 }
 
 async function createConnection(currentUserEmail, otherUserEmail) {
+
     let res = await fetch(`http://localhost:5000/send-shared-key/`, {
         mode: "cors"
     })
     let shared_key = await res.json()
+
     const connectionRef = await addDoc(collection(db, 'connections'), {
         encryptedSharedKey: shared_key.data,
         createdOn: new Date().getTime(),
@@ -84,20 +87,12 @@ async function createConnection(currentUserEmail, otherUserEmail) {
 }
 
 async function loadMessages() {
-    let res = await fetch(`http://localhost:5000/send-shared-key/`, {
-        mode: "cors"
-    })
-    let shared_key = await res.json()
-
-    await fetch(`http://localhost:5000/shared-key/${shared_key.data}/`, {
+    await fetch(`http://localhost:5000/shared-key/${get(connectionRoom)['connection']['encryptedSharedKey']}/`, {
         mode: "cors"
     })
     const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), limit(7))
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         messages.set([])
-
-        // Im sorry for this mess, I will clean it
-
         querySnapshot.forEach((doc) => {
             fetch(`http://localhost:5000/decrypt-message`, {
                 method: "POST",

@@ -6,7 +6,7 @@
 {#if $auth.user}
 	<!-- content here -->
 	<img src={$auth.user.photoURL} alt="Profile Thumbnail" />
-	<h2>{$auth.user.displayName}</h2>
+	<h2>{$auth.user.email}</h2>
 {:else}
 	<!-- else content here -->
 	<h2 class="text-error">Need to Login First</h2>
