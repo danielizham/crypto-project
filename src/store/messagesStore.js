@@ -71,11 +71,15 @@ async function checkConnection(currentUserEmail, otherUserEmail) {
 }
 
 async function createConnection(currentUserEmail, otherUserEmail) {
+    let shared_key = { data: "" }
+    try {
+        let res = await fetch(`http://localhost:5000/send-shared-key/`, {
+            mode: "cors"
+        })
+        shared_key = await res.json()
+    } catch (error) {
 
-    let res = await fetch(`http://localhost:5000/send-shared-key/`, {
-        mode: "cors"
-    })
-    let shared_key = await res.json()
+    }
 
     const connectionRef = await addDoc(collection(db, 'connections'), {
         encryptedSharedKey: shared_key.data,
