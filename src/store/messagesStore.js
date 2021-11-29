@@ -64,10 +64,9 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
 }
 
 async function checkConnection(currentUserEmail, otherUserEmail) {
-    console.log(get(connectionRoom).connectionID);
     if (get(connectionRoom).connectionID == undefined)
         await createConnection(currentUserEmail, otherUserEmail)
-    await loadMessages()
+    await loadMessages(currentUserEmail)
 }
 
 async function createConnection(currentUserEmail, otherUserEmail) {
@@ -90,7 +89,7 @@ async function createConnection(currentUserEmail, otherUserEmail) {
     connectionRoom.set({ connection: connectionInformation.data(), connectionID: connectionRef.id })
 }
 
-async function loadMessages() {
+async function loadMessages(currentUserEmail) {
     await fetch(`http://localhost:5000/shared-key/${get(connectionRoom)['connection']['encryptedSharedKey']}/`, {
         mode: "cors"
     })
@@ -98,7 +97,8 @@ async function loadMessages() {
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         messages.set([])
         querySnapshot.forEach((doc) => {
-            fetch(`http://localhost:5000/decrypt-message`, {
+            let owner = doc.data().userEmail == currentUserEmail ? "self" : "other"
+            fetch(`http://localhost:5000/decrypt-message/${owner}`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'

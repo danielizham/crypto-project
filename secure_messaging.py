@@ -14,8 +14,9 @@ class User:
     def sign(self, message):
         return self.key.sign(message)
 
-    def verify(self, signature, message):
-        return coincurve.verify_signature(signature, message, self._other_public_key)
+    def verify(self, signature, message, owner):
+        pub_key = self._other_public_key if owner == "other" else self.key.public
+        return coincurve.verify_signature(signature, message, pub_key)
 
     def encrypt(self, message):
         # convert plaintext into bytes
@@ -34,7 +35,7 @@ class User:
 
         return signed_ciphertext.hex(), nonce.hex(), len(signature)
 
-    def decrypt(self, received_message, nonce, sign_len):
+    def decrypt(self, received_message, nonce, sign_len, owner):
         data = bytes.fromhex(received_message)
         nonce = bytes.fromhex(nonce)
 
@@ -46,7 +47,7 @@ class User:
         plaintext = cipher.decrypt(ciphertext)
 
         # asym decryption w/ public key -> extracted hash == hash(plaintext) ?
-        is_secure = self.verify(signature, plaintext)
+        is_secure = self.verify(signature, plaintext, owner)
 
         if is_secure:
             print("The message is authentic.")
@@ -75,10 +76,11 @@ class User:
     @property
     def name(self):
         return self._name
-    
+
     @name.setter
     def name(self, value):
         self._name = value
+
 
 class Key:
     def __init__(self):

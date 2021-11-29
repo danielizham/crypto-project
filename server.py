@@ -82,12 +82,12 @@ def encrypt_message():
 # Message Decryption #
 ######################
 # TO FRONTEND
-@app.route("/decrypt-message", methods=["POST"])
-def decrypt_message():
+@app.route("/decrypt-message/<owner>", methods=["POST"])
+def decrypt_message(owner):
     ciphertext = request.json["ciphertext"]
     nonce = request.json["nonce"]
     sign_len = request.json["sign_len"]
-    message = user.decrypt(ciphertext, nonce, sign_len)
+    message = user.decrypt(ciphertext, nonce, sign_len, owner)
     if message:
         return res(message, "ok")
 
