@@ -16,15 +16,15 @@ def res(data, status):
 
 
 # Path for our main Svelte page
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def base():
-    return send_from_directory("client/public", "index.html")
+    return send_from_directory("./build", "index.html")
 
 
 # Path for all the static files (compiled JS/CSS, etc.)
-@app.route("/<path:path>")
+@app.route("/<path:path>", methods=["GET", "POST"])
 def home(path):
-    return send_from_directory("client/public", path)
+    return send_from_directory("./build", path)
 
 
 @app.route("/set-name/<name>", methods=["GET", "POST"])
@@ -66,12 +66,12 @@ def receive_shared_key(received_shared_key):
 # Message Encryption #
 ######################
 # TO FRONTEND
-@app.route("/my-pub-key")
+@app.route("/my-pub-key", methods=["GET", "POST"])
 def my_pub_key():
     return res(user.key.public.hex(), "ok")
 
 
-@app.route("/encrypt-message", methods=["POST"])
+@app.route("/encrypt-message", methods=["GET", "POST"])
 def encrypt_message():
     message = request.json
     ciphertext, nonce, sign_len = user.encrypt(message)
@@ -82,7 +82,7 @@ def encrypt_message():
 # Message Decryption #
 ######################
 # TO FRONTEND
-@app.route("/decrypt-message/<owner>", methods=["POST"])
+@app.route("/decrypt-message/<owner>", methods=["GET", "POST"])
 def decrypt_message(owner):
     ciphertext = request.json["ciphertext"]
     nonce = request.json["nonce"]
