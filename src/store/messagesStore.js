@@ -1,4 +1,5 @@
 import { addDoc, collection, query, onSnapshot, limit, getDocs, deleteDoc, where, doc, getDoc, setDoc, updateDoc } from "@firebase/firestore";
+import { async } from "@firebase/util";
 import { writable, get } from "svelte/store";
 import { db } from "../Firebase"
 
@@ -46,9 +47,15 @@ async function initiateConnection(currentUserEmail) {
 
 async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
 
-    onSnapshot(doc(db, "users", otherUserEmail), document => {
+    onSnapshot(doc(db, "users", otherUserEmail), async (document) => {
         console.log(`User Update: ${JSON.stringify(document.data())}`);
         secondParty.set(document.data())
+        await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
+            mode: "cors"
+        })
+        await fetch(`http://localhost:5000/shared-key/${get(connectionRoom).connection.encryptedSharedKey}/`, {
+            mode: "cors"
+        })
     })
 
     const connectionQuery = query(collection(db, 'connections'))
@@ -57,14 +64,14 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
         let connectionExists = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
         if (connectionExists) {
             connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
-            onSnapshot(doc(db, "connections", connection.id), document => {
+            onSnapshot(doc(db, "connections", connection.id), async (document) => {
                 console.log(`Connection Update: ${JSON.stringify(document.data())}`);
                 connectionRoom.set({ connection: document.data(), connectionID: document.id })
+                await fetch(`http://localhost:5000/shared-key/${get(connectionRoom).connection.encryptedSharedKey}/`, {
+                    mode: "cors"
+                })
             })
         }
-    })
-    await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
-        mode: "cors"
     })
     await checkConnection(currentUserEmail, otherUserEmail)
 }
