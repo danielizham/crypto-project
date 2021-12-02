@@ -19,6 +19,7 @@ async function addMessage(userId, userEmail, message, username) {
     let { ciphertext, nonce, sign_len } = await res.json()
     const connectionRef = await addDoc(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), {
         createdOn: new Date().getTime(),
+        order: get(messages).length + 1,
         userId: `${userId}`,
         userEmail,
         username,
@@ -93,7 +94,7 @@ async function loadMessages(currentUserEmail) {
     await fetch(`http://localhost:5000/shared-key/${get(connectionRoom)['connection']['encryptedSharedKey']}/`, {
         mode: "cors"
     })
-    const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), limit(7))
+    const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`))
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         messages.set([])
         querySnapshot.forEach((doc) => {
@@ -111,11 +112,11 @@ async function loadMessages(currentUserEmail) {
                     if (status == "ok") {
                         messages.update(mesgs => [
                             ...mesgs, { ...doc.data(), message: data }
-                        ].sort((a, b) => b.createdOn - a.createdOn))
+                        ].sort((a, b) => b.order - a.order))
                     } else if (status == "not-ok" && data == "") {
                         messages.update(mesgs => [
                             ...mesgs, { ...doc.data(), message: "Corrupted Message" }
-                        ].sort((a, b) => b.createdOn - a.createdOn))
+                        ].sort((a, b) => b.order - a.order))
                     }
                 })
 
