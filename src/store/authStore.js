@@ -15,7 +15,7 @@ const addUserInfo = async (userEmail, username, userId) => {
         mode: 'cors',
     })
     let { data } = await response_2.json()
-    const userRef = await setDoc(doc(db, 'users', userId), {
+    const userRef = await setDoc(doc(db, 'users', userEmail), {
         userId,
         userEmail,
         publicKey: `${data}`,

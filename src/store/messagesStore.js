@@ -45,16 +45,20 @@ async function initiateConnection(currentUserEmail) {
 }
 
 async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
-    const userQuery = query(collection(db, 'users'), where('userEmail', "==", otherUserEmail))
-    const otherUser = await getDocs(userQuery)
-    otherUser.docs.map(d => secondParty.set(d.data()))
+    onSnapshot(doc(db, "users", otherUserEmail), document => {
+        console.log(`User Update: ${document.data()}`);
+        secondParty.set(document.data())
+    })
 
     const connectionQuery = query(collection(db, 'connections'))
     const connectionSnap = await getDocs(connectionQuery)
     connectionSnap.forEach(connection => {
         let connectionExists = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
         if (connectionExists) {
-            connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
+            onSnapshot(doc(db, "connections", connection.id), document => {
+                console.log(`Connection Update: ${document.data()}`);
+                connectionRoom.set({ connection: document.data(), connectionID: document.id })
+            })
         }
     })
     console.log(get(secondParty)["publicKey"]);
@@ -87,7 +91,10 @@ async function createConnection(currentUserEmail, otherUserEmail) {
         userEmails: [currentUserEmail, otherUserEmail],
     })
     let connectionInformation = await getDoc(connectionRef)
-    connectionRoom.set({ connection: connectionInformation.data(), connectionID: connectionRef.id })
+    onSnapshot(doc(db, "connections", connectionInformation.id), document => {
+        console.log(`Connection Update: ${document.data()}`);
+        connectionRoom.set({ connection: document.data(), connectionID: document.id })
+    })
 }
 
 async function loadMessages(currentUserEmail) {
