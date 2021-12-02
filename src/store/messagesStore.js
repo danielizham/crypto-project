@@ -4,6 +4,7 @@ import { writable, get } from "svelte/store";
 import { db } from "../Firebase"
 
 const messages = writable([])
+const sharedKey = writable([])
 const secondParty = writable({})
 const connectionRoom = writable({})
 
@@ -53,9 +54,16 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
         await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
             mode: "cors"
         })
-        await fetch(`http://localhost:5000/shared-key/${get(connectionRoom).connection.encryptedSharedKey}/`, {
-            mode: "cors"
-        })
+        let shared_key = { data: "" }
+        try {
+            let res = await fetch(`http://localhost:5000/send-shared-key/`, {
+                mode: "cors"
+            })
+            shared_key = await res.json()
+            sharedKey.set(shared_key.data)
+        } catch (error) {
+            console.error(error);
+        }
     })
 
     const connectionQuery = query(collection(db, 'connections'))
@@ -64,13 +72,6 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
         let connectionExists = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
         if (connectionExists) {
             connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
-            onSnapshot(doc(db, "connections", connection.id), async (document) => {
-                console.log(`Connection Update: ${JSON.stringify(document.data())}`);
-                connectionRoom.set({ connection: document.data(), connectionID: document.id })
-                await fetch(`http://localhost:5000/shared-key/${get(connectionRoom).connection.encryptedSharedKey}/`, {
-                    mode: "cors"
-                })
-            })
         }
     })
     await checkConnection(currentUserEmail, otherUserEmail)
@@ -83,18 +84,8 @@ async function checkConnection(currentUserEmail, otherUserEmail) {
 }
 
 async function createConnection(currentUserEmail, otherUserEmail) {
-    let shared_key = { data: "" }
-    try {
-        let res = await fetch(`http://localhost:5000/send-shared-key/`, {
-            mode: "cors"
-        })
-        shared_key = await res.json()
-    } catch (error) {
-        console.error(error);
-    }
-
     const connectionRef = await addDoc(collection(db, 'connections'), {
-        encryptedSharedKey: shared_key.data,
+        encryptedSharedKey: get(sharedKey),
         createdOn: new Date().getTime(),
         userEmails: [currentUserEmail, otherUserEmail],
     })
@@ -107,23 +98,18 @@ async function createConnection(currentUserEmail, otherUserEmail) {
 }
 
 async function loadMessages(currentUserEmail) {
-    let shared_key = { data: "" }
-    try {
-        let res = await fetch(`http://localhost:5000/send-shared-key/`, {
+    onSnapshot(doc(db, "connections", get(connectionRoom).connectionID), async (document) => {
+        console.log(`Connection Update: ${JSON.stringify(document.data())}`);
+        connectionRoom.set({ connection: document.data(), connectionID: document.id })
+        await fetch(`http://localhost:5000/shared-key/${get(sharedKey)}/`, {
             mode: "cors"
         })
-        shared_key = await res.json()
-    } catch (error) {
-        console.error(error);
-    }
+    })
 
     await updateDoc(doc(db, "connections", get(connectionRoom).connectionID), {
-        encryptedSharedKey: shared_key.data
+        encryptedSharedKey: get(sharedKey)
     })
 
-    await fetch(`http://localhost:5000/shared-key/${shared_key.data}/`, {
-        mode: "cors"
-    })
     const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`))
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         messages.set([])
