@@ -46,9 +46,6 @@ async function initiateConnection(currentUserEmail) {
 
 async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
 
-    const docRef = doc(db, "users", otherUserEmail);
-    const docSnap = await getDoc(docRef);
-    secondParty.set(docSnap.data())
     onSnapshot(doc(db, "users", otherUserEmail), document => {
         console.log(`User Update: ${document.data()}`);
         secondParty.set(document.data())
