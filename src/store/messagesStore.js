@@ -47,7 +47,7 @@ async function initiateConnection(currentUserEmail) {
 async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
 
     onSnapshot(doc(db, "users", otherUserEmail), document => {
-        console.log(`User Update: ${document.data()}`);
+        console.log(`User Update: ${JSON.stringify(document.data())}`);
         secondParty.set(document.data())
     })
 
@@ -58,7 +58,7 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
         if (connectionExists) {
             connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
             onSnapshot(doc(db, "connections", connection.id), document => {
-                console.log(`Connection Update: ${document.data()}`);
+                console.log(`Connection Update: ${JSON.stringify(document.data())}`);
                 connectionRoom.set({ connection: document.data(), connectionID: document.id })
             })
         }
@@ -94,7 +94,7 @@ async function createConnection(currentUserEmail, otherUserEmail) {
     let connectionInformation = await getDoc(connectionRef)
     connectionRoom.set({ connection: connectionInformation.data(), connectionID: connectionInformation.id })
     onSnapshot(doc(db, "connections", connectionInformation.id), document => {
-        console.log(`Connection Update: ${document.data()}`);
+        console.log(`Connection Update: ${JSON.stringify(document.data())}`);
         connectionRoom.set({ connection: document.data(), connectionID: document.id })
     })
 }
