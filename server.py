@@ -1,10 +1,11 @@
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, render_template
 from flask_cors import CORS
 from flask import request
 from flask import jsonify
 from secure_messaging import User
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="./build/_app", template_folder="./build")
+
 CORS(app)
 
 
@@ -15,16 +16,10 @@ def res(data, status):
     return jsonify({"data": str(data), "status": status})
 
 
-# Path for our main Svelte page
-@app.route("/", methods=["GET", "POST"])
-def base():
-    return send_from_directory("./build", "index.html")
-
-
-# Path for all the static files (compiled JS/CSS, etc.)
-@app.route("/<path:path>", methods=["GET", "POST"])
-def home(path):
-    return send_from_directory("./build", path)
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def catch_all(path):
+    return render_template("index.html")
 
 
 @app.route("/set-name/<name>", methods=["GET", "POST"])

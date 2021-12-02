@@ -66,7 +66,6 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
             })
         }
     })
-    console.log(get(secondParty)["publicKey"]);
     await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
         mode: "cors"
     })
@@ -74,7 +73,6 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
 }
 
 async function checkConnection(currentUserEmail, otherUserEmail) {
-    console.log(get(connectionRoom).connectionID);
     if (get(connectionRoom).connectionID == undefined)
         await createConnection(currentUserEmail, otherUserEmail)
     await loadMessages(currentUserEmail)
@@ -88,7 +86,7 @@ async function createConnection(currentUserEmail, otherUserEmail) {
         })
         shared_key = await res.json()
     } catch (error) {
-
+        console.error(error);
     }
 
     const connectionRef = await addDoc(collection(db, 'connections'), {
@@ -105,7 +103,21 @@ async function createConnection(currentUserEmail, otherUserEmail) {
 }
 
 async function loadMessages(currentUserEmail) {
-    await fetch(`http://localhost:5000/shared-key/${get(connectionRoom)['connection']['encryptedSharedKey']}/`, {
+    let shared_key = { data: "" }
+    try {
+        let res = await fetch(`http://localhost:5000/send-shared-key/`, {
+            mode: "cors"
+        })
+        shared_key = await res.json()
+    } catch (error) {
+        console.error(error);
+    }
+
+    await updateDoc(doc(db, "connections", get(connectionRoom).connectionID), {
+        encryptedSharedKey: shared_key.data
+    })
+
+    await fetch(`http://localhost:5000/shared-key/${shared_key.data}/`, {
         mode: "cors"
     })
     const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`))
@@ -139,6 +151,7 @@ async function loadMessages(currentUserEmail) {
 }
 
 async function deleteMessages(userId) {
+    messages.set([])
     const q = query(collection(db, `connections/${get(connectionRoom)['connectionID']}/messages`), where('userId', "==", userId))
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach(async (document) => {
