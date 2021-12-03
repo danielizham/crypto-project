@@ -98,6 +98,8 @@ async function loadMessages(currentUserEmail) {
         sharedKey.set(get(connectionRoom).connection.encryptedSharedKey)
         fetch(`http://localhost:5000/shared-key/${get(sharedKey)}`, {
             mode: "cors"
+        }).catch(error => {
+            console.log("Hiccup !");
         })
     })
     await updateDoc(doc(db, "connections", get(connectionRoom).connectionID), {
@@ -122,10 +124,6 @@ async function loadMessages(currentUserEmail) {
                     if (status == "ok") {
                         messages.update(mesgs => [
                             ...mesgs, { ...doc.data(), message: data }
-                        ].sort((a, b) => b.order - a.order))
-                    } else if (status == "not-ok" && data == "") {
-                        messages.update(mesgs => [
-                            ...mesgs, { ...doc.data(), message: "Corrupted Message" }
                         ].sort((a, b) => b.order - a.order))
                     }
                 })
