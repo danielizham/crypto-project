@@ -10,7 +10,7 @@ const connectionRoom = writable({})
 
 async function addMessage(userId, userEmail, message, username) {
 
-    let res = await fetch(`http://localhost:5000/encrypt-message`, {
+    let res = await fetch(`/encrypt-message`, {
         method: "POST",
         headers: {
             'Content-Type': 'application/json'
@@ -59,11 +59,11 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
     onSnapshot(doc(db, "users", otherUserEmail), async (document) => {
         console.log(`User Update: ${JSON.stringify(document.data())}`);
         secondParty.set(document.data())
-        await fetch(`http://localhost:5000/other-pub-key/${get(secondParty)["publicKey"]}`, {
+        await fetch(`/other-pub-key/${get(secondParty)["publicKey"]}`, {
             mode: "cors"
         })
         let shared_key = { data: "" }
-        let res = await fetch(`http://localhost:5000/send-shared-key/`, {
+        let res = await fetch(`/send-shared-key/`, {
             mode: "cors"
         })
         shared_key = await res.json()
@@ -96,7 +96,7 @@ async function loadMessages(currentUserEmail) {
         console.log(`Connection Update: ${JSON.stringify(document.data())}`);
         connectionRoom.set({ connection: document.data(), connectionID: document.id })
         sharedKey.set(get(connectionRoom).connection.encryptedSharedKey)
-        fetch(`http://localhost:5000/shared-key/${get(sharedKey)}`, {
+        fetch(`/shared-key/${get(sharedKey)}`, {
             mode: "cors"
         }).catch(error => {
             console.log("Hiccup !");
@@ -111,7 +111,7 @@ async function loadMessages(currentUserEmail) {
         messages.set([])
         querySnapshot.forEach((doc) => {
             let owner = doc.data().userEmail == currentUserEmail ? "self" : "other"
-            fetch(`http://localhost:5000/decrypt-message/${owner}`, {
+            fetch(`/decrypt-message/${owner}`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'

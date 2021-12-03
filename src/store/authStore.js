@@ -8,10 +8,10 @@ import {  doc, setDoc } from "@firebase/firestore"
 
 
 const addUserInfo = async (userEmail, username, userId) => {
-    fetch(`http://localhost:5000/set-name/${username}`, {
+    fetch(`/set-name/${username}`, {
         mode: 'cors'
     })
-    let response_2 = await fetch('http://localhost:5000/my-pub-key', {
+    let response_2 = await fetch('/my-pub-key', {
         mode: 'cors',
     })
     let { data } = await response_2.json()
