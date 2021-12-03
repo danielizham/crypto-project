@@ -47,6 +47,14 @@ async function initiateConnection(currentUserEmail) {
 }
 
 async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
+    const connectionQuery = query(collection(db, 'connections'))
+    const connectionSnap = await getDocs(connectionQuery)
+    connectionSnap.forEach(connection => {
+        let connectionExists = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
+        if (connectionExists) {
+            connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
+        }
+    })
 
     onSnapshot(doc(db, "users", otherUserEmail), async (document) => {
         console.log(`User Update: ${JSON.stringify(document.data())}`);
@@ -55,24 +63,14 @@ async function listenToOtherPerson(currentUserEmail, otherUserEmail) {
             mode: "cors"
         })
         let shared_key = { data: "" }
-        try {
-            let res = await fetch(`http://localhost:5000/send-shared-key/`, {
-                mode: "cors"
-            })
-            shared_key = await res.json()
-            sharedKey.set(shared_key.data)
-        } catch (error) {
-            console.error(error);
-        }
-    })
-
-    const connectionQuery = query(collection(db, 'connections'))
-    const connectionSnap = await getDocs(connectionQuery)
-    connectionSnap.forEach(connection => {
-        let connectionExists = connection.data().userEmails.includes(currentUserEmail) && connection.data().userEmails.includes(otherUserEmail)
-        if (connectionExists) {
-            connectionRoom.set({ connection: connection.data(), connectionID: connection.id })
-        }
+        let res = await fetch(`http://localhost:5000/send-shared-key/`, {
+            mode: "cors"
+        })
+        shared_key = await res.json()
+        await updateDoc(doc(db, "connections", get(connectionRoom).connectionID), {
+            encryptedSharedKey: shared_key.data
+        })
+        sharedKey.set(shared_key.data)
     })
     await checkConnection(currentUserEmail, otherUserEmail)
 }
@@ -91,10 +89,6 @@ async function createConnection(currentUserEmail, otherUserEmail) {
     })
     let connectionInformation = await getDoc(connectionRef)
     connectionRoom.set({ connection: connectionInformation.data(), connectionID: connectionInformation.id })
-    onSnapshot(doc(db, "connections", connectionInformation.id), document => {
-        console.log(`Connection Update: ${JSON.stringify(document.data())}`);
-        connectionRoom.set({ connection: document.data(), connectionID: document.id })
-    })
 }
 
 async function loadMessages(currentUserEmail) {
