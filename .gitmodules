@@ -1,3 +1,0 @@
-[submodule "server"]
-	path = backend
-	url = https://github.com/danielizham/crypto-project.git
