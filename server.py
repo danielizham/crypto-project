@@ -91,4 +91,4 @@ def decrypt_message(owner):
 
 if __name__ == "__main__":
     user = User()
-    app.run()
+    app.run(host="0.0.0.0")
