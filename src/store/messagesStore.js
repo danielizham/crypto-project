@@ -95,11 +95,11 @@ async function loadMessages(currentUserEmail) {
     onSnapshot(doc(db, "connections", get(connectionRoom).connectionID), async (document) => {
         console.log(`Connection Update: ${JSON.stringify(document.data())}`);
         connectionRoom.set({ connection: document.data(), connectionID: document.id })
-        await fetch(`http://localhost:5000/shared-key/${get(sharedKey)}/`, {
+        sharedKey.set(get(connectionRoom).connection.encryptedSharedKey)
+        fetch(`http://localhost:5000/shared-key/${get(sharedKey)}`, {
             mode: "cors"
         })
     })
-
     await updateDoc(doc(db, "connections", get(connectionRoom).connectionID), {
         encryptedSharedKey: get(sharedKey)
     })
@@ -143,4 +143,4 @@ async function deleteMessages(userId) {
     });
 }
 
-export { addMessage, messages, deleteMessages, initiateConnection, secondParty, connectionRoom }
+export { addMessage, messages, deleteMessages, initiateConnection, secondParty, sharedKey }

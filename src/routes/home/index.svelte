@@ -1,12 +1,5 @@
 <script>
-	import {
-		messages,
-		addMessage,
-		deleteMessages,
-		initiateConnection,
-		secondParty,
-		connectionRoom,
-	} from "../../store/messagesStore"
+	import { messages, addMessage, deleteMessages, initiateConnection, secondParty } from "../../store/messagesStore"
 	import { auth } from "../../store/authStore"
 	let messageContent = ""
 	function submitMessage() {
