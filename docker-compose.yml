@@ -1,0 +1,12 @@
+version: "3.7"
+services: 
+        app-sheikh:
+                container_name: sheikh
+                image: danielizham/crypto-app:latest
+                ports:
+                        - 5001:5000
+        app-president:
+                container_name: president
+                image: danielizham/crypto-app:latest
+                ports:
+                        - 5002:5000
